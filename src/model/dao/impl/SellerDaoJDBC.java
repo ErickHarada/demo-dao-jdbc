@@ -10,7 +10,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SellerDaoJDBC implements SellerDao {
 
@@ -37,7 +40,6 @@ public class SellerDaoJDBC implements SellerDao {
 
     @Override
     public Seller findById(Integer id) {
-
         PreparedStatement statement = null;
         ResultSet resultSet = null;
         try {
@@ -84,5 +86,43 @@ public class SellerDaoJDBC implements SellerDao {
     @Override
     public List<Seller> findAll() {
         return null;
+    }
+
+    @Override
+    public List<Seller> findByDepartment(Department department) {
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        try {
+            statement = connection.prepareStatement(
+                    "select seller.*, department.Name as DepName " +
+                            "from seller inner join department on seller.DepartmentId = department.id " +
+                            "where department.id = ? " +
+                            "ORDER BY name;"
+            );
+            statement.setInt(1, department.getId());
+            resultSet = statement.executeQuery();
+
+            List<Seller> list = new ArrayList<>();
+            Map<Integer, Department> map = new HashMap<>();
+
+            while (resultSet.next()) {
+
+                Department dep = map.get(resultSet.getInt("DepartmentId"));
+
+                if (dep == null) {
+                    dep = instantiateDepartment(resultSet);
+                    map.put(dep.getId(), dep);
+                }
+
+                Seller seller = instantiateSeller(resultSet, dep);
+                list.add(seller);
+            }
+            return list;
+        } catch (SQLException e) {
+            throw new DbException(e.getMessage());
+        } finally {
+            DB.closeStatement(statement);
+            DB.closeResultSet(resultSet);
+        }
     }
 }
