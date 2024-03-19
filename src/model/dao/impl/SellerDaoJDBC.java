@@ -36,7 +36,7 @@ public class SellerDaoJDBC implements SellerDao {
 
             int rowsAffected = statement.executeUpdate();
 
-            if(rowsAffected > 0) {
+            if (rowsAffected > 0) {
                 ResultSet resultSet = statement.getGeneratedKeys();
                 if (resultSet.next()) {
                     int id = resultSet.getInt(1);
@@ -60,14 +60,13 @@ public class SellerDaoJDBC implements SellerDao {
             statement = connection.prepareStatement(
                     "update seller " +
                             "set Name = ?, Email = ?, BirthDate = ?, BaseSalary = ?, DepartmentId = ? " +
-                            "where Id = ?", Statement.RETURN_GENERATED_KEYS
-            );
+                            "where Id = ?");
             statement.setString(1, seller.getName());
             statement.setString(2, seller.getEmail());
             statement.setDate(3, new java.sql.Date(seller.getBirthDate().getTime()));
             statement.setDouble(4, seller.getBaseSalary());
             statement.setInt(5, seller.getDepartment().getId());
-            statement.setInt(6 , seller.getId());
+            statement.setInt(6, seller.getId());
 
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -79,7 +78,16 @@ public class SellerDaoJDBC implements SellerDao {
 
     @Override
     public void deleteById(Integer id) {
-
+        PreparedStatement statement = null;
+        try {
+            statement = connection.prepareStatement("delete from seller where Id = ?");
+            statement.setInt(1, id);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new DbException(e.getMessage());
+        } finally {
+            DB.closeStatement(statement);
+        }
     }
 
     @Override
